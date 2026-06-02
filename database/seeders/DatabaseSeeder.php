@@ -2,53 +2,43 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Equipment;
+use App\Models\Pengguna;
+use App\Models\Peralatan;
+use App\Models\Peminjaman;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
-class DatabaseSeeder extends Seeder
-{
-    public function run(): void
-    {
-        // Seed Users
-        User::create([
-            'name' => 'Admin TEFA PPLG',
-            'email' => 'admin@tefa.id',
-            'password' => Hash::make('password123'),
-            'role' => 'admin',
+class DatabaseSeeder extends Seeder {
+    public function run(): void {
+        // Data Pengguna Dummy
+        $pengguna = Pengguna::create([
+            'nama' => 'Muhammad Yusuf Wibawa',
+            'kelas' => 'XII',
+            'jurusan' => 'PPLG',
+            'no_hp' => '081234567890'
         ]);
 
-        User::create([
-            'name' => 'Yusuf Student',
-            'email' => 'student@tefa.id',
-            'password' => Hash::make('password123'),
-            'role' => 'user',
+        // Data Peralatan Dummy
+        $peralatan1 = Peralatan::create([
+            'nama_peralatan' => 'Solder Listrik Adjustable',
+            'kategori' => 'Elektronika',
+            'jumlah_stok' => 10,
+            'kondisi' => 'Bagus'
         ]);
 
-        // Seed Equipments
-        Equipment::create([
-            'nama_alat' => 'Router MikroTik RB960PGS',
-            'kode_alat' => 'ALT-MT-001',
-            'stok' => 5,
-            'deskripsi' => 'Routerboard hEX PoE dengan 5 port Gigabit Ethernet.',
-            'gambar' => null,
+        $peralatan2 = Peralatan::create([
+            'nama_peralatan' => 'MikroTik RouterBOARD RB960PGS',
+            'kategori' => 'Networking',
+            'jumlah_stok' => 5,
+            'kondisi' => 'Bagus'
         ]);
 
-        Equipment::create([
-            'nama_alat' => 'ESP32 NodeMCU Development Board',
-            'kode_alat' => 'ALT-ESP-023',
-            'stok' => 15,
-            'deskripsi' => 'Microcontroller board dengan support Wi-Fi dan Bluetooth.',
-            'gambar' => null,
-        ]);
-        
-        Equipment::create([
-            'nama_alat' => 'Solder Listrik Adjustable 60W',
-            'kode_alat' => 'ALT-SLD-005',
-            'stok' => 10,
-            'deskripsi' => 'Solder dengan pengatur suhu untuk praktikum IoT.',
-            'gambar' => null,
+        // Data Transaksi Peminjaman Dummy
+        Peminjaman::create([
+            'pengguna_id' => $pengguna->id,
+            'peralatan_id' => $peralatan1->id,
+            'tanggal_pinjam' => now(),
+            'tanggal_kembali' => null,
+            'jumlah_pinjam' => 1
         ]);
     }
 }

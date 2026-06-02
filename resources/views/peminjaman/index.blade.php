@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peminjaman Alat Lab TEFA</title>
+    <title>Sistem Peminjaman Alat Lab TEFA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -35,7 +35,8 @@
                             <tr>
                                 <th class="ps-3">No</th>
                                 <th>Nama Peminjam</th>
-                                <th>Nama Alat</th>
+                                <th>Peralatan</th>
+                                <th>Jumlah</th>
                                 <th>Tanggal Pinjam</th>
                                 <th>Tanggal Kembali</th>
                                 <th>Status</th>
@@ -43,30 +44,30 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($loans as $index => $loan)
+                            @forelse($peminjamans as $index => $data)
                                 <tr>
-                                    <td class="ps-3">{{ $loans->firstItem() + $index }}</td>
-                                    <td><strong>{{ $loan->user->name }}</strong><br><small class="text-muted">{{ $loan->user->email }}</small></td>
-                                    <td><span class="badge bg-secondary">{{ $loan->equipment->kode_alat }}</span> {{ $loan->equipment->nama_alat }}</td>
-                                    <td>{{ $loan->tanggal_pinjam->format('d M Y') }}</td>
-                                    <td>{{ $loan->tanggal_kembali ? $loan->tanggal_kembali->format('d M Y') : '-' }}</td>
+                                    <td class="ps-3">{{ $peminjamans->firstItem() + $index }}</td>
+                                    <td><strong>{{ $data->pengguna->nama }}</strong><br><small class="text-muted">{{ $data->pengguna->kelas }} - {{ $data->pengguna->jurusan }}</small></td>
+                                    <td><span class="badge bg-secondary">{{ $data->peralatan->kategori }}</span> {{ $data->peralatan->nama_peralatan }}</td>
+                                    <td>{{ $data->jumlah_pinjam }} Unit</td>
+                                    <td>{{ $data->tanggal_pinjam->format('d M Y') }}</td>
+                                    <td>{{ $data->tanggal_kembali ? $data->tanggal_kembali->format('d M Y') : '-' }}</td>
                                     <td>
-                                        @if($loan->status === 'dipinjam')
+                                        @if(!$data->tanggal_kembali)
                                             <span class="badge bg-warning text-dark">Dipinjam</span>
                                         @else
                                             <span class="badge bg-success">Dikembalikan</span>
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @if($loan->status === 'dipinjam')
-                                            <form action="{{ route('loans.return', $loan->id) }}" method="POST" class="d-inline">
+                                        @if(!$data->tanggal_kembali)
+                                            <form action="{{ route('peminjaman.return', $data->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" class="btn btn-sm btn-success">Kembalikan Alat</button>
+                                                <button type="submit" class="btn btn-sm btn-success">Kembalikan</button>
                                             </form>
                                         @endif
-                                        
-                                        <form action="{{ route('loans.destroy', $loan->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus log transaksi ini?')">
+                                        <form action="{{ route('peminjaman.destroy', $data->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus transaksi ini?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Hapus</button>
@@ -75,7 +76,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">Belum ada data transaksi peminjaman.</td>
+                                    <td colspan="8" class="text-center py-4 text-muted">Belum ada data transaksi peminjaman.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -85,21 +86,20 @@
         </div>
 
         <div class="d-flex justify-content-end mt-3">
-            {{ $loans->links() }}
+            {{ $peminjamans->links() }}
         </div>
     </div>
 
-    <div class="modal fade" id="modalPinjam" tabindex="-1" aria-labelledby="modalPinjamLabel" aria-hidden="true">
+    <div class="modal fade" id="modalPinjam" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalPinjamLabel">Catat Transaksi Peminjaman Baru</h5>
+                    <h5 class="modal-title">Catat Transaksi Peminjaman</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="{{ route('loans.store') }}" method="POST">
+                <form action="{{ route('peminjaman.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
-                        
                         @if ($errors->any())
                             <div class="alert alert-danger">
                                 <ul class="mb-0">
@@ -111,34 +111,36 @@
                         @endif
 
                         <div class="mb-3">
-                            <label for="user_id" class="form-label">Nama Peminjam (Siswa/Admin)</label>
-                            <select class="form-select" name="user_id" id="user_id" required>
-                                <option value="" selected disabled>-- Pilih Peminjam --</option>
-                                @foreach(\App\Models\User::all() as $user)
-                                    <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }} ({{ ucfirst($user->role) }})
-                                    </option>
+                            <label class="form-label">Nama Peminjam</label>
+                            <select class="form-select" name="pengguna_id" required>
+                                <option value="" selected disabled>-- Pilih Anggota --</option>
+                                @foreach(\App\Models\Pengguna::all() as $p)
+                                    <option value="{{ $p->id }}">{{ $p->nama }} ({{ $p->kelas }} {{ $p->jurusan }})</option>
                                 @endforeach
                             </select>
                         </div>
 
                         <div class="mb-3">
-                            <label for="equipment_id" class="form-label">Peralatan Lab TEFA</label>
-                            <select class="form-select" name="equipment_id" id="equipment_id" required>
+                            <label class="form-label">Peralatan Lab</label>
+                            <select class="form-select" name="peralatan_id" required>
                                 <option value="" selected disabled>-- Pilih Alat --</option>
-                                @foreach(\App\Models\Equipment::all() as $equipment)
-                                    <option value="{{ $equipment->id }}" {{ old('equipment_id') == $equipment->id ? 'selected' : '' }} {{ $equipment->stok < 1 ? 'disabled' : '' }}>
-                                        {{ $equipment->kode_alat }} - {{ $equipment->nama_alat }} (Stok: {{ $equipment->stok }})
+                                @foreach(\App\Models\Peralatan::all() as $a)
+                                    <option value="{{ $a->id }}" {{ $a->jumlah_stok < 1 ? 'disabled' : '' }}>
+                                        {{ $a->nama_peralatan }} (Stok: {{ $a->jumlah_stok }} | Kondisi: {{ $a->kondisi }})
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
                         <div class="mb-3">
-                            <label for="tanggal_pinjam" class="form-label">Tanggal Pinjam</label>
-                            <input type="date" class="form-control" name="tanggal_pinjam" id="tanggal_pinjam" value="{{ old('tanggal_pinjam', date('Y-m-d')) }}" required>
+                            <label class="form-label">Jumlah Pinjam</label>
+                            <input type="number" class="form-control" name="jumlah_pinjam" value="1" min="1" required>
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label">Tanggal Pinjam</label>
+                            <input type="date" class="form-control" name="tanggal_pinjam" value="{{ date('Y-m-d') }}" required>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -150,14 +152,5 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    @if ($errors->any())
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                var myModal = new bootstrap.Modal(document.getElementById('modalPinjam'));
-                myModal.show();
-            });
-        </script>
-    @endif
 </body>
 </html>

@@ -1,16 +1,9 @@
 <?php
 
+use App\Http\Controllers\PeminjamanController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\EquipmentController;
-use App\Http\Controllers\LoanController;
 
-Route::get('/', [LoanController::class, 'index']);
-
-// CRUD Resource Routes
-Route::resource('users', UserController::class)->except(['create', 'edit']);
-Route::resource('equipments', EquipmentController::class)->except(['create', 'edit']);
-Route::resource('loans', LoanController::class)->except(['create', 'edit', 'update']);
-
-// Custom Route Khusus Proses Pengembalian Alat
-Route::patch('loans/{loan}/return', [LoanController::class, 'returnEquipment'])->name('loans.return');
+Route::get('/', [PeminjamanController::class, 'index'])->name('peminjaman.index');
+Route::post('/peminjaman', [PeminjamanController::class, 'store'])->name('peminjaman.store');
+Route::patch('/peminjaman/{id}/return', [PeminjamanController::class, 'return'])->name('peminjaman.return');
+Route::delete('/peminjaman/{id}', [PeminjamanController::class, 'destroy'])->name('peminjaman.destroy');
